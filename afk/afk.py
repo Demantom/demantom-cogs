@@ -6,7 +6,7 @@ from redbot.core import Config, checks, commands
 from redbot.core.bot import Red
 
 
-class Afk(commands.cog):
+class Afk(commands.Cog):
     "Afk cog which will make programmers break their tables and start drinking"
     __version__ = "0.0.1"
     __author__ = ["Demantom"]

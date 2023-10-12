@@ -15,8 +15,6 @@
         2
     ],
     "name": "Afk",
-    "permissions": [
-    ],
     "required_cogs": {},
     "requirements": [],
     "short": "AFK nothing more",
