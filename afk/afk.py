@@ -17,7 +17,7 @@ class Afk(commands.Cog):
         self.config.register_guild(**default_guild)
         self.config.register_guild(**self.default_guild_settings)
         self.config.register_user(**self.default_user_settings)
-
+        self.config = Config.get_conf(self, force_registration=True)
     async def afk_settings(self, ctx):
         author = ctx.author
         msg = ""
