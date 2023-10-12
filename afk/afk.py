@@ -13,7 +13,7 @@ class Afk(commands.Cog):
 
     def __init__(self, bot):
         self.bot: Red = bot
-        self.config = Config.get_conf(self, force_registration=True)
+        self.config = Config.get_conf(self,8423491260, force_registration=True)
         default_guild: Dict[str, Optional[int]] = {"mute_role": None}
         self.config.register_guild(**default_guild)
         self.config.register_guild(**self.default_guild_settings)
