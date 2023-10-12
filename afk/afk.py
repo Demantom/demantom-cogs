@@ -67,6 +67,18 @@ class Afk(commands.Cog):
                 msg += f"{name}: {status_msg} deleted after {delete_after}s\n"
             else:
                 msg += f"{name}: {status_msg}\n"
+            user_data = await self.config.user(author).all()
+            away_msg = user_data["MESSAGE"]
+            # Convert possible `delete_after` of < 5s of before PR#212
+            if isinstance(away_msg, list) and away_msg[1] is not None and away_msg[1] < 5:
+                await self.config.user(author).MESSAGE.set((away_msg[0], 5))
+                away_msg = away_msg[0], 5
+            if away_msg:
+                if type(away_msg) in [tuple, list]:
+                    # This is just to keep backwards compatibility
+                    away_msg, delete_after = away_msg
+                else:
+                    delete_after = None
 
 
     @commands.command(name="afk")
