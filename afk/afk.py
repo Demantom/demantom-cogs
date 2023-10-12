@@ -11,6 +11,17 @@ class Afk(commands.Cog):
     __version__ = "0.0.1"
     __author__ = ["Demantom"]
 
+    default_global_settings = {"ign_servers": []}
+    default_guild_settings = {"TEXT_ONLY": False, "BLACKLISTED_MEMBERS": []}
+    default_user_settings = {
+        "MESSAGE": False,
+        "IDLE_MESSAGE": False,
+        "DND_MESSAGE": False,
+        "OFFLINE_MESSAGE": False,
+        "GAME_MESSAGE": {},
+        "STREAMING_MESSAGE": False,
+        "LISTENING_MESSAGE": False
+    }
     def __init__(self, bot):
         self.bot: Red = bot
         self.config = Config.get_conf(self,8423491260, force_registration=True)
