@@ -25,25 +25,41 @@ class Afk(commands.Cog):
         self.config.register_user(**self.default_user_settings)
 
     @commands.Cog.listener()
+    @commands.Cog.listener()
     async def on_message_without_command(self, message: discord.Message):
         guild = message.guild
-        author = message.author
         if not guild or not message.mentions or message.author.bot:
             return
         if not message.channel.permissions_for(guild.me).send_messages:
             return
+
         blocked_guilds = await self.config.ign_servers()
         guild_config = await self.config.guild(guild).all()
-        user_data = await self.config.user(author).all()
-        embed_links = message.channel.permissions_for(guild.me).embed_links
+        for author in message.mentions:
+            if (guild.id in blocked_guilds and not await self.is_mod_or_admin(author)) or author.id in guild_config[
+                "BLACKLISTED_MEMBERS"]:
+                continue
+            user_data = await self.config.user(author).all()
+            embed_links = message.channel.permissions_for(guild.me).embed_links
 
-        guild = message.guild
-        if not guild or not message.mentions or message.author.bot:
-            return
-        if not message.channel.permissions_for(guild.me).send_messages:
-            return
-        away_msg = user_data["MESSAGE"]
-        guild_config = await self.config.guild(guild).all()
+            away_msg = user_data["MESSAGE"]
+            # Convert possible `delete_after` of < 5s of before PR#212
+            if isinstance(away_msg, list) and away_msg[1] is not None and away_msg[1] < 5:
+                await self.config.user(author).MESSAGE.set((away_msg[0], 5))
+                away_msg = away_msg[0], 5
+            if away_msg:
+                if type(away_msg) in [tuple, list]:
+                    # This is just to keep backwards compatibility
+                    away_msg, delete_after = away_msg
+                else:
+                    delete_after = None
+                if embed_links and not guild_config["TEXT_ONLY"]:
+                    em = await self.make_embed_message(author, away_msg, "away")
+                    await message.channel.send(embed=em, delete_after=delete_after)
+                elif (embed_links and guild_config["TEXT_ONLY"]) or not embed_links:
+                    msg = await self.make_text_message(author, away_msg, "away")
+                    await message.channel.send(msg, delete_after=delete_after)
+                continue
     @commands.command(name="afksettings", aliases=["afkset"])
     async def afk_settings(self, ctx):
         author = ctx.author
@@ -67,18 +83,6 @@ class Afk(commands.Cog):
                 msg += f"{name}: {status_msg} deleted after {delete_after}s\n"
             else:
                 msg += f"{name}: {status_msg}\n"
-            user_data = await self.config.user(author).all()
-            away_msg = user_data["MESSAGE"]
-            # Convert possible `delete_after` of < 5s of before PR#212
-            if isinstance(away_msg, list) and away_msg[1] is not None and away_msg[1] < 5:
-                await self.config.user(author).MESSAGE.set((away_msg[0], 5))
-                away_msg = away_msg[0], 5
-            if away_msg:
-                if type(away_msg) in [tuple, list]:
-                    # This is just to keep backwards compatibility
-                    away_msg, delete_after = away_msg
-                else:
-                    delete_after = None
 
 
     @commands.command(name="afk")
