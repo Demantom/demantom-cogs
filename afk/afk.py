@@ -15,12 +15,6 @@ class Afk(commands.Cog):
     default_guild_settings = {"TEXT_ONLY": False, "BLACKLISTED_MEMBERS": []}
     default_user_settings = {
         "MESSAGE": False,
-        "IDLE_MESSAGE": False,
-        "DND_MESSAGE": False,
-        "OFFLINE_MESSAGE": False,
-        "GAME_MESSAGE": {},
-        "STREAMING_MESSAGE": False,
-        "LISTENING_MESSAGE": False
     }
     def __init__(self, bot):
         self.bot: Red = bot
@@ -30,14 +24,50 @@ class Afk(commands.Cog):
         self.config.register_guild(**self.default_guild_settings)
         self.config.register_user(**self.default_user_settings)
 
+    @commands.Cog.listener()
+    async def on_message_without_command(self, message: discord.Message):
+        guild = message.guild
+        author = message.author
+        if not guild or not message.mentions or message.author.bot:
+            return
+        if not message.channel.permissions_for(guild.me).send_messages:
+            return
+        blocked_guilds = await self.config.ign_servers()
+        guild_config = await self.config.guild(guild).all()
+        user_data = await self.config.user(author).all()
+        embed_links = message.channel.permissions_for(guild.me).embed_links
+
+        guild = message.guild
+        if not guild or not message.mentions or message.author.bot:
+            return
+        if not message.channel.permissions_for(guild.me).send_messages:
+            return
+        away_msg = user_data["MESSAGE"]
+        guild_config = await self.config.guild(guild).all()
     @commands.command(name="afksettings", aliases=["afkset"])
     async def afk_settings(self, ctx):
         author = ctx.author
         msg = ""
         data = {
-            "MESSAGE": "user is afk"
-
+            "MESSAGE": "user is afk",
         }
+        settings = await self.config.user(author).get_raw()
+        for attr, name in data.items():
+            if type(settings[attr]) in [tuple, list]:
+                # This is just to keep backwards compatibility
+                status_msg, delete_after = settings[attr]
+            else:
+                status_msg = settings[attr]
+                delete_after = None
+            if settings[attr] and len(status_msg) > 20:
+                status_msg = status_msg[:20] + "..."
+            if settings[attr] and len(status_msg) <= 1:
+                status_msg = "True"
+            if delete_after:
+                msg += f"{name}: {status_msg} deleted after {delete_after}s\n"
+            else:
+                msg += f"{name}: {status_msg}\n"
+
 
     @commands.command(name="afk")
     async def afk_(self, ctx, delete_after: Optional[int] = None, *, message: str = None):
